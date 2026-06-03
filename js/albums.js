@@ -21,7 +21,7 @@ export const ALBUMS = [
     color: "#1d2733",
     cover: "",                 // e.g. "cover.jpg"
     photos: [
-      "1.jpg, 2.jpg, 3.jpg, 4.jpg, 5.jpg"
+      "1.jpg", "2.jpg", "3.jpg", "4.jpg", "5.jpg"
     ]
   },
   {
