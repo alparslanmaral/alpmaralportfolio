@@ -34,12 +34,12 @@ export const ALBUMS = [
     ]
   },
   {
-    name:  "Manzara",
-    folder:"Manzara",
+    name:  "Portrait",
+    folder:"Portrait",
     color: "#16241c",
     cover: "",
     photos: [
-      // "01.jpg", "02.jpg"
+      "1.jpg", "2.jpg", "3.jpg", "4.jpg", "5.jpg"
     ]
   }
 ];
