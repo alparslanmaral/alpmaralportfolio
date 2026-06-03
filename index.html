@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Arşiv — Fotoğraf & Video</title>
+
+  <!-- Sinematik / daktilo tipografisi -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Oswald:wght@300;400;600&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="css/style.css" />
+
+  <!-- Three.js (modül + addon'lar). Yerel sunucu ile çalışır. -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <!-- 3D sahne buraya çizilir -->
+  <canvas id="scene"></canvas>
+
+  <!-- Karartma / vinyet / film grain katmanları -->
+  <div id="vignette"></div>
+  <div id="grain"></div>
+
+  <!-- Açılış yükleme ekranı -->
+  <div id="loader">
+    <div class="loader-inner">
+      <span class="loader-title">ARŞİV</span>
+      <span class="loader-sub">dosyalar getiriliyor…</span>
+      <div class="loader-bar"><i></i></div>
+    </div>
+  </div>
+
+  <!-- Hover'da albümün adı -->
+  <div id="album-label" class="hidden"></div>
+
+  <!-- Alt orta yönerge metni -->
+  <div id="hint" class="hidden"></div>
+
+  <!-- Inceleme ekranındaki "tıkla" çağrısı -->
+  <div id="inspect-cta" class="hidden">
+    <span class="cta-name"></span>
+    <span class="cta-action">İncelemek için tıkla</span>
+  </div>
+
+  <!-- Albüm içi kontroller -->
+  <div id="book-ui" class="hidden">
+    <button id="prev" aria-label="Önceki sayfa">‹</button>
+    <div id="page-counter">1 / 1</div>
+    <button id="next" aria-label="Sonraki sayfa">›</button>
+  </div>
+
+  <!-- Üst köşe: geri dön -->
+  <button id="back" class="hidden">‹ MASAYA DÖN</button>
+
+  <!-- Başlık (masa görünümü) -->
+  <header id="brand">
+    <h1>ARŞİV</h1>
+    <p>fotoğraf &amp; video — dosyalara göz at</p>
+  </header>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

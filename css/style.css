@@ -1,0 +1,189 @@
+/* =========================================================
+   ARŞİV — noir / sorgu odası teması
+   ========================================================= */
+
+:root{
+  --bg:        #050505;
+  --ink:       #e8e2d4;     /* sıcak kağıt rengi metin */
+  --ink-dim:   #8c8678;
+  --accent:    #d9a441;     /* sıcak spot ışığı sarısı */
+  --line:      rgba(217,164,65,.35);
+  --font-disp: "Oswald", sans-serif;
+  --font-type: "Special Elite", "Courier New", monospace;
+}
+
+*{ margin:0; padding:0; box-sizing:border-box; }
+
+html,body{
+  height:100%;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:var(--font-disp);
+  overflow:hidden;
+  cursor:none;                 /* özel imleç hissi için sistem imleci gizli */
+  -webkit-font-smoothing:antialiased;
+}
+
+#scene{
+  position:fixed;
+  inset:0;
+  width:100%;
+  height:100%;
+  display:block;
+  cursor:none;
+}
+
+/* ---------- Vinyet (kenar karartma) ---------- */
+#vignette{
+  position:fixed; inset:0; pointer-events:none; z-index:5;
+  background:
+    radial-gradient(120% 90% at 50% 42%,
+      rgba(0,0,0,0) 38%,
+      rgba(0,0,0,.55) 78%,
+      rgba(0,0,0,.92) 100%);
+  mix-blend-mode:multiply;
+}
+
+/* ---------- Film grain ---------- */
+#grain{
+  position:fixed; inset:-50%; pointer-events:none; z-index:6;
+  opacity:.06;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation:grain 1.2s steps(6) infinite;
+}
+@keyframes grain{
+  0%{transform:translate(0,0)} 20%{transform:translate(-4%,3%)}
+  40%{transform:translate(3%,-2%)} 60%{transform:translate(-2%,4%)}
+  80%{transform:translate(4%,-3%)} 100%{transform:translate(0,0)}
+}
+
+/* ---------- Yükleme ekranı ---------- */
+#loader{
+  position:fixed; inset:0; z-index:50;
+  display:flex; align-items:center; justify-content:center;
+  background:#040404;
+  transition:opacity .9s ease;
+}
+#loader.gone{ opacity:0; pointer-events:none; }
+.loader-inner{ text-align:center; }
+.loader-title{
+  display:block; font-family:var(--font-disp); font-weight:600;
+  letter-spacing:.7em; font-size:clamp(28px,6vw,56px); color:var(--ink);
+  text-indent:.7em;
+}
+.loader-sub{
+  display:block; margin-top:14px; font-family:var(--font-type);
+  font-size:13px; color:var(--ink-dim); letter-spacing:.15em;
+}
+.loader-bar{
+  margin:26px auto 0; width:200px; height:2px;
+  background:rgba(255,255,255,.08); overflow:hidden;
+}
+.loader-bar i{
+  display:block; height:100%; width:40%;
+  background:var(--accent);
+  animation:slide 1.1s ease-in-out infinite;
+}
+@keyframes slide{
+  0%{transform:translateX(-110%)} 100%{transform:translateX(360%)}
+}
+
+/* ---------- Hover albüm etiketi ---------- */
+#album-label{
+  position:fixed; z-index:8; pointer-events:none;
+  transform:translate(-50%,-140%);
+  font-family:var(--font-type);
+  font-size:15px; letter-spacing:.18em;
+  color:var(--ink);
+  padding:6px 14px;
+  background:rgba(10,8,4,.7);
+  border:1px solid var(--line);
+  backdrop-filter:blur(2px);
+  white-space:nowrap;
+  text-shadow:0 0 12px rgba(217,164,65,.45);
+  transition:opacity .18s ease;
+}
+
+/* ---------- Alt ipucu ---------- */
+#hint{
+  position:fixed; left:50%; bottom:38px; transform:translateX(-50%);
+  z-index:8; pointer-events:none;
+  font-family:var(--font-type); font-size:12px; letter-spacing:.25em;
+  color:var(--ink-dim); text-transform:uppercase;
+  transition:opacity .4s ease;
+}
+
+/* ---------- Inceleme çağrısı ---------- */
+#inspect-cta{
+  position:fixed; left:50%; bottom:14%; transform:translateX(-50%);
+  z-index:8; text-align:center; pointer-events:none;
+  transition:opacity .4s ease;
+}
+#inspect-cta .cta-name{
+  display:block; font-family:var(--font-disp); font-weight:300;
+  font-size:clamp(22px,4vw,40px); letter-spacing:.32em; text-indent:.32em;
+  color:var(--ink); text-shadow:0 0 24px rgba(217,164,65,.4);
+}
+#inspect-cta .cta-action{
+  display:block; margin-top:14px; font-family:var(--font-type);
+  font-size:13px; letter-spacing:.2em; color:var(--accent);
+  animation:pulse 1.8s ease-in-out infinite;
+}
+@keyframes pulse{ 0%,100%{opacity:.45} 50%{opacity:1} }
+
+/* ---------- Albüm içi sayfa kontrolleri ---------- */
+#book-ui{
+  position:fixed; left:50%; bottom:34px; transform:translateX(-50%);
+  z-index:8; display:flex; align-items:center; gap:22px;
+}
+#book-ui button{
+  cursor:pointer; pointer-events:auto;
+  width:54px; height:54px; border-radius:50%;
+  background:rgba(12,10,6,.55); color:var(--ink);
+  border:1px solid var(--line); font-size:26px; line-height:1;
+  transition:.2s ease;
+}
+#book-ui button:hover{
+  background:var(--accent); color:#0a0700;
+  box-shadow:0 0 26px rgba(217,164,65,.5);
+}
+#book-ui button:disabled{ opacity:.25; cursor:default; box-shadow:none; background:rgba(12,10,6,.55); color:var(--ink); }
+#page-counter{
+  font-family:var(--font-type); font-size:13px; letter-spacing:.2em;
+  color:var(--ink-dim); min-width:70px; text-align:center;
+}
+
+/* ---------- Geri butonu ---------- */
+#back{
+  position:fixed; top:28px; left:30px; z-index:9;
+  cursor:pointer; pointer-events:auto;
+  background:none; border:none; color:var(--ink-dim);
+  font-family:var(--font-type); font-size:13px; letter-spacing:.18em;
+  transition:.2s ease;
+}
+#back:hover{ color:var(--accent); }
+
+/* ---------- Marka başlığı ---------- */
+#brand{
+  position:fixed; top:30px; left:50%; transform:translateX(-50%);
+  z-index:7; text-align:center; pointer-events:none;
+  transition:opacity .5s ease;
+}
+#brand h1{
+  font-family:var(--font-disp); font-weight:600;
+  font-size:clamp(22px,3vw,34px); letter-spacing:.55em; text-indent:.55em;
+  color:var(--ink); opacity:.92;
+}
+#brand p{
+  margin-top:6px; font-family:var(--font-type);
+  font-size:11px; letter-spacing:.28em; color:var(--ink-dim);
+  text-transform:uppercase;
+}
+
+/* ---------- Yardımcı ---------- */
+.hidden{ opacity:0 !important; pointer-events:none !important; }
+
+@media (max-width:640px){
+  #brand h1{ letter-spacing:.35em; }
+  #inspect-cta .cta-name{ letter-spacing:.18em; }
+}
