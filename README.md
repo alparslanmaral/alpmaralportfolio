@@ -1,66 +1,67 @@
-# ARŞİV — 3D Fotoğraf/Video Portföyü
+# ARCHIVE — 3D Photography/Video Portfolio
 
-Sorgu odası atmosferinde, masaya bakan, 3D albümlerin durduğu interaktif bir portföy.
-Hover'da albüm adı + glow + ikinci spot ışığı; tıklayınca Resident Evil tarzı inceleme;
-tekrar tıklayınca Alan Wake tarzı duvarın önünde 3D sayfa çevirme.
+An interactive portfolio set in an interrogation-room atmosphere: you look down at a
+desk where 3D albums sit. On hover an album shows its name + a glow + a second spotlight;
+click to inspect it (Resident Evil item style); click again to step inside and flip
+through 3D pages in front of an Alan Wake style wall.
 
-## Klasör yapısı
+## Folder structure
 ```
 portfolio/
 ├── index.html
 ├── css/style.css
 ├── js/
-│   ├── main.js        ← sahne + tüm etkileşim
-│   ├── albums.js      ← ALBÜMLERİ BURADAN YÖNETİRSİN
-│   └── textures.js    ← prosedürel dokular (masa/duvar/kapak)
+│   ├── main.js        ← scene + all interaction
+│   ├── albums.js      ← MANAGE YOUR ALBUMS HERE
+│   └── textures.js    ← procedural textures (desk/wall/cover)
 └── assets/
-    ├── Sokak Portreleri/
-    ├── Dugun/
-    └── Manzara/
+    ├── Street Portraits/
+    ├── Wedding/
+    └── Landscape/
 ```
 
-## ⚠️ Çalıştırma (önemli)
-Tarayıcı, `file://` ile açıldığında yerel görselleri (doku/foto) **güvenlik nedeniyle
-yükleyemez**. Bu yüzden küçük bir yerel sunucu gerekir:
+## ⚠️ Running it (important)
+When opened with `file://`, the browser blocks loading local images (textures/photos)
+for security reasons. So you need a tiny local server:
 
-**Python (en kolay):**
+**Python (easiest):**
 ```bash
 cd portfolio
 python -m http.server 8000
 ```
-Sonra tarayıcıda: `http://localhost:8000`
+Then open: `http://localhost:8000`
 
-**VS Code:** "Live Server" eklentisini kur → index.html'e sağ tık → "Open with Live Server".
+**VS Code:** install the "Live Server" extension → right-click index.html → "Open with Live Server".
 
-İnternet bağlantısı gerekir (Three.js ve fontlar CDN'den gelir).
+An internet connection is required (Three.js and the fonts load from a CDN).
 
-## Albüm / fotoğraf ekleme
-1. `assets/` içinde albüm adıyla bir klasör aç (örn: `assets/Manzara/`).
-2. Fotoğrafları o klasöre at (`.jpg`, `.png`, `.webp`).
-3. `js/albums.js` dosyasını aç ve albümü tanımla:
+## Adding an album / photos
+1. Create a folder inside `assets/` named after the album (e.g. `assets/Landscape/`).
+2. Drop your photos in it (`.jpg`, `.png`, `.webp`).
+3. Open `js/albums.js` and define the album:
 
 ```js
 {
-  name:  "Manzara",        // masada/etikette görünen ad
-  folder:"Manzara",        // assets içindeki klasör adı
-  color: "#16241c",        // kapak rengi
-  cover: "",               // kapak görseli (örn "kapak.jpg"); boşsa otomatik
-  photos: [ "01.jpg", "02.jpg", "03.jpg" ]   // klasördeki dosya adları
+  name:  "Landscape",        // label shown on the desk / on hover
+  folder:"Landscape",        // folder name inside assets/
+  color: "#16241c",          // cover color
+  cover: "",                 // cover image (e.g. "cover.jpg"); empty = auto
+  photos: [ "01.jpg", "02.jpg", "03.jpg" ]   // filenames in the folder
 }
 ```
 
-> Statik site klasörü kendi başına okuyamadığı için fotoğraf adlarını
-> `photos` dizisine elle yazman gerekiyor. Sıra = albümdeki sayfa sırası.
+> A static site can't read a folder by itself, so you list the photo filenames
+> in the `photos` array manually. Order = page order in the album.
 
-## Kontroller
-- **Masa:** albüme gel → ad + glow + spot. Tıkla → inceleme.
-- **İnceleme:** tekrar tıkla → albümün içine gir. `Esc` → masaya dön.
-- **Albüm içi:** ekranın sağ/sol yarısına tıkla veya alttaki ‹ › ile sayfa çevir.
-  `Esc` ya da sol üstteki "MASAYA DÖN" ile çık.
+## Controls
+- **Desk:** hover an album → name + glow + spotlight. Click → inspect.
+- **Inspect:** click again → step inside the album. `Esc` → back to desk.
+- **Inside an album:** click the left/right half of the screen, or use the ‹ › buttons,
+  to turn pages. `Esc` or "BACK TO DESK" (top-left) to exit.
 
-## İnce ayar (main.js)
-- Spot ışık şiddeti/açısı: `spot1`, `spot2` tanımları.
-- Kamera açısı: `POSE.desk` / `POSE.album`.
-- Albüm boyutu: `const W = 1.7, H = 2.3, T = 0.38`.
-- Sayfa oranı: `PAGE_W`, `PAGE_H`.
-- Glow rengi: `outline.visibleEdgeColor` (varsayılan altın sarısı).
+## Tweaks (main.js)
+- Spotlight intensity/angle: the `spot1`, `spot2` definitions.
+- Camera angle: `POSE.desk` / `POSE.album`.
+- Album size: `const W = 1.7, H = 2.3, T = 0.38`.
+- Page ratio: `PAGE_W`, `PAGE_H`.
+- Hover glow color: `outline.visibleEdgeColor` (default warm gold).

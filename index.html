@@ -1,18 +1,18 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Arşiv — Fotoğraf & Video</title>
+  <title>Archive — Photography & Video</title>
 
-  <!-- Sinematik / daktilo tipografisi -->
+  <!-- Cinematic / typewriter type -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Oswald:wght@300;400;600&display=swap" rel="stylesheet" />
 
   <link rel="stylesheet" href="css/style.css" />
 
-  <!-- Three.js (modül + addon'lar). Yerel sunucu ile çalışır. -->
+  <!-- Three.js (module + addons). Requires a local server. -->
   <script type="importmap">
   {
     "imports": {
@@ -23,48 +23,48 @@
   </script>
 </head>
 <body>
-  <!-- 3D sahne buraya çizilir -->
+  <!-- 3D scene is drawn here -->
   <canvas id="scene"></canvas>
 
-  <!-- Karartma / vinyet / film grain katmanları -->
+  <!-- Darkening / vignette / film grain layers -->
   <div id="vignette"></div>
   <div id="grain"></div>
 
-  <!-- Açılış yükleme ekranı -->
+  <!-- Intro loading screen -->
   <div id="loader">
     <div class="loader-inner">
-      <span class="loader-title">ARŞİV</span>
-      <span class="loader-sub">dosyalar getiriliyor…</span>
+      <span class="loader-title">ARCHIVE</span>
+      <span class="loader-sub">retrieving files…</span>
       <div class="loader-bar"><i></i></div>
     </div>
   </div>
 
-  <!-- Hover'da albümün adı -->
+  <!-- Album name on hover -->
   <div id="album-label" class="hidden"></div>
 
-  <!-- Alt orta yönerge metni -->
+  <!-- Bottom-center hint text -->
   <div id="hint" class="hidden"></div>
 
-  <!-- Inceleme ekranındaki "tıkla" çağrısı -->
+  <!-- Inspect screen "click" call-to-action -->
   <div id="inspect-cta" class="hidden">
     <span class="cta-name"></span>
-    <span class="cta-action">İncelemek için tıkla</span>
+    <span class="cta-action">Click to open</span>
   </div>
 
-  <!-- Albüm içi kontroller -->
+  <!-- In-album controls -->
   <div id="book-ui" class="hidden">
-    <button id="prev" aria-label="Önceki sayfa">‹</button>
+    <button id="prev" aria-label="Previous page">‹</button>
     <div id="page-counter">1 / 1</div>
-    <button id="next" aria-label="Sonraki sayfa">›</button>
+    <button id="next" aria-label="Next page">›</button>
   </div>
 
-  <!-- Üst köşe: geri dön -->
-  <button id="back" class="hidden">‹ MASAYA DÖN</button>
+  <!-- Top corner: go back -->
+  <button id="back" class="hidden">‹ BACK TO DESK</button>
 
-  <!-- Başlık (masa görünümü) -->
+  <!-- Brand (desk view) -->
   <header id="brand">
-    <h1>ARŞİV</h1>
-    <p>fotoğraf &amp; video — dosyalara göz at</p>
+    <h1>ARCHIVE</h1>
+    <p>photography &amp; video — browse the files</p>
   </header>
 
   <script type="module" src="js/main.js"></script>

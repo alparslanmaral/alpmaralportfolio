@@ -6,7 +6,6 @@ import * as THREE from "three";
 import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass }     from "three/addons/postprocessing/RenderPass.js";
 import { OutlinePass }    from "three/addons/postprocessing/OutlinePass.js";
-import { UnrealBloomPass} from "three/addons/postprocessing/UnrealBloomPass.js";
 import { OutputPass }     from "three/addons/postprocessing/OutputPass.js";
 
 import { ALBUMS } from "./albums.js";
@@ -185,15 +184,13 @@ const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
 
 const outline = new OutlinePass(new THREE.Vector2(innerWidth, innerHeight), scene, camera);
-outline.edgeStrength = 4.0;
-outline.edgeGlow = 0.8;
-outline.edgeThickness = 2.0;
+outline.edgeStrength = 3.0;
+outline.edgeGlow = 0.3;
+outline.edgeThickness = 1.5;
 outline.visibleEdgeColor.set(0xd9a441);
-outline.hiddenEdgeColor.set(0x3a2a10);
+outline.hiddenEdgeColor.set(0x2a1f0c);
 composer.addPass(outline);
 
-const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.4, 0.5, 0.82);
-composer.addPass(bloom);
 composer.addPass(new OutputPass());
 
 /* ----------------- Özel imleç ----------------- */
@@ -410,7 +407,7 @@ function buildAlbum(album){
 
 /* Bir yüz için doku üret (fotoğraf -> mat içinde sığdırılmış) */
 function makeFaceTexture(face, mirror=false){
-  const W = 760, H = Math.round(W / PAGE_ASPECT);
+  const W = 1100, H = Math.round(W / PAGE_ASPECT);
   const c = document.createElement("canvas");
   c.width = W; c.height = H;
   const x = c.getContext("2d");
@@ -418,20 +415,20 @@ function makeFaceTexture(face, mirror=false){
   function paper(){
     x.fillStyle = "#13110c";
     x.fillRect(0,0,W,H);
-    for(let i=0;i<3000;i++){ x.fillStyle = `rgba(0,0,0,${Math.random()*0.12})`; x.fillRect(Math.random()*W, Math.random()*H, 1.5, 1.5); }
+    for(let i=0;i<6000;i++){ x.fillStyle = `rgba(0,0,0,${Math.random()*0.12})`; x.fillRect(Math.random()*W, Math.random()*H, 1.5, 1.5); }
   }
 
   if(!face || face.type === "back" || face.type === "empty"){
     paper();
-    x.strokeStyle = "rgba(217,164,65,.18)"; x.lineWidth = 2; x.strokeRect(30,30,W-60,H-60);
+    x.strokeStyle = "rgba(217,164,65,.18)"; x.lineWidth = 3; x.strokeRect(44,44,W-88,H-88);
   } else if(face.type === "cover"){
-    // iç kapak / başlık sayfası
+    // inner cover / title page
     paper();
     x.fillStyle = "rgba(232,226,212,.92)"; x.textAlign = "center";
-    x.font = "600 46px Oswald, sans-serif";
-    x.fillText(face.album.name.toUpperCase(), W/2, H/2 - 10);
-    x.font = "20px 'Special Elite', monospace"; x.fillStyle = "rgba(217,164,65,.8)";
-    x.fillText("— ARŞİV —", W/2, H/2 + 36);
+    x.font = "600 66px Oswald, sans-serif";
+    x.fillText(face.album.name.toUpperCase(), W/2, H/2 - 14);
+    x.font = "30px 'Special Elite', monospace"; x.fillStyle = "rgba(217,164,65,.8)";
+    x.fillText("— ARCHIVE —", W/2, H/2 + 52);
   } else {
     paper();
   }
@@ -446,30 +443,30 @@ function makeFaceTexture(face, mirror=false){
     const img = new Image();
     img.onload = () => {
       paper();
-      // çerçeve
-      const pad = 46;
+      // frame
+      const pad = Math.round(W * 0.06);
       const innerW = W - pad*2, innerH = H - pad*2;
       const ar = img.width / img.height;
       let dw = innerW, dh = innerW / ar;
       if(dh > innerH){ dh = innerH; dw = innerH * ar; }
       const dx = (W - dw)/2, dy = (H - dh)/2;
-      // gölge + foto
+      // shadow + photo
       x.save();
-      x.shadowColor = "rgba(0,0,0,.7)"; x.shadowBlur = 22; x.shadowOffsetY = 8;
+      x.shadowColor = "rgba(0,0,0,.7)"; x.shadowBlur = 30; x.shadowOffsetY = 10;
       x.fillStyle = "#000"; x.fillRect(dx, dy, dw, dh);
       x.restore();
       x.drawImage(img, dx, dy, dw, dh);
-      x.strokeStyle = "rgba(217,164,65,.5)"; x.lineWidth = 2;
+      x.strokeStyle = "rgba(217,164,65,.5)"; x.lineWidth = 3;
       x.strokeRect(dx, dy, dw, dh);
       tex.needsUpdate = true;
     };
     img.onerror = () => {
       paper();
-      x.fillStyle = "rgba(180,60,60,.8)"; x.textAlign = "center";
-      x.font = "22px 'Special Elite', monospace";
-      x.fillText("görsel bulunamadı", W/2, H/2);
-      x.font = "15px 'Special Elite', monospace"; x.fillStyle = "rgba(140,134,120,.5)";
-      x.fillText(face.url, W/2, H/2 + 30);
+      x.fillStyle = "rgba(180,60,60,.85)"; x.textAlign = "center";
+      x.font = "32px 'Special Elite', monospace";
+      x.fillText("image not found", W/2, H/2);
+      x.font = "20px 'Special Elite', monospace"; x.fillStyle = "rgba(140,134,120,.5)";
+      x.fillText(face.url, W/2, H/2 + 40);
       tex.needsUpdate = true;
     };
     img.src = face.url;
@@ -640,7 +637,7 @@ function start(){
   state = STATE.DESK;
   ui.loader.classList.add("gone");
   setHidden(ui.hint, false);
-  ui.hint.textContent = "bir albümün üzerine gel · incelemek için tıkla";
+  ui.hint.textContent = "hover an album · click to inspect";
 }
 
 animate();

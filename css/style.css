@@ -100,7 +100,7 @@ html,body{
   border:1px solid var(--line);
   backdrop-filter:blur(2px);
   white-space:nowrap;
-  text-shadow:0 0 12px rgba(217,164,65,.45);
+  text-shadow:0 1px 3px rgba(0,0,0,.8);
   transition:opacity .18s ease;
 }
 
@@ -122,7 +122,7 @@ html,body{
 #inspect-cta .cta-name{
   display:block; font-family:var(--font-disp); font-weight:300;
   font-size:clamp(22px,4vw,40px); letter-spacing:.32em; text-indent:.32em;
-  color:var(--ink); text-shadow:0 0 24px rgba(217,164,65,.4);
+  color:var(--ink); text-shadow:0 2px 8px rgba(0,0,0,.8);
 }
 #inspect-cta .cta-action{
   display:block; margin-top:14px; font-family:var(--font-type);

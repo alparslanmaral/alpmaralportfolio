@@ -127,7 +127,7 @@ export function coverTexture(name, hex){
   // alt etiket
   x.font = "20px 'Special Elite', monospace";
   x.fillStyle = "rgba(217,164,65,.85)";
-  x.fillText("• ARŞİV •", 256, 612);
+  x.fillText("• ARCHIVE •", 256, 612);
 
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
@@ -147,10 +147,10 @@ export function placeholderTexture(text){
   x.fillStyle = "rgba(140,134,120,.8)";
   x.textAlign = "center";
   x.font = "26px 'Special Elite', monospace";
-  x.fillText(text || "fotoğraf ekle", 350, 460);
+  x.fillText(text || "add photo", 350, 460);
   x.font = "16px 'Special Elite', monospace";
   x.fillStyle = "rgba(140,134,120,.45)";
-  x.fillText("assets/<albüm>/ klasörüne", 350, 500);
+  x.fillText("into assets/<album>/", 350, 500);
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
   return t;
