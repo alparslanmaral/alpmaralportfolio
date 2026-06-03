@@ -20,9 +20,7 @@ export const ALBUMS = [
     folder:"Portraits",
     color: "#1d2733",
     cover: "",                 // e.g. "cover.jpg"
-    photos: [
-      "1.jpg", "2.jpg", "3.jpg", "4.jpg", "5.jpg"
-    ]
+    photos: ["1.jpg", "2.jpg", "3.jpg", "4.jpg", "5.jpg"]
   },
   {
     name:  "Wedding",
