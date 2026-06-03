@@ -1,6 +1,6 @@
 /* =========================================================
-   ARŞİV — 3D fotoğraf/video portföyü
-   Three.js (modül). Tüm etkileşim ve sahne burada.
+   ARCHIVE — 3D photography/video portfolio
+   Three.js (module). All scene + interaction here.
    ========================================================= */
 import * as THREE from "three";
 import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
@@ -11,11 +11,11 @@ import { OutputPass }     from "three/addons/postprocessing/OutputPass.js";
 import { ALBUMS } from "./albums.js";
 import { woodTexture, wallTexture, coverTexture } from "./textures.js";
 
-/* ----------------- Durumlar ----------------- */
+/* ----------------- States ----------------- */
 const STATE = { LOADING:"loading", DESK:"desk", INSPECT:"inspect", ALBUM:"album" };
 let state = STATE.LOADING;
 
-/* ----------------- Temel kurulum ----------------- */
+/* ----------------- Base setup ----------------- */
 const canvasEl = document.getElementById("scene");
 const renderer = new THREE.WebGLRenderer({ canvas:canvasEl, antialias:true });
 renderer.setSize(innerWidth, innerHeight);
@@ -32,7 +32,7 @@ scene.fog = new THREE.Fog(0x040404, 10, 26);
 const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.1, 100);
 camera.position.set(0, 7, 7.4);
 
-/* Kamera hedefleri (yumuşak geçiş için) */
+/* Camera goals (for smooth transitions) */
 const camPos  = camera.position.clone();
 const camLook = new THREE.Vector3(0, 0, -0.4);
 const curLook = camLook.clone();
@@ -43,10 +43,10 @@ const POSE = {
 function setPose(p){ camPos.copy(p.pos); camLook.copy(p.look); }
 setPose(POSE.desk);
 
-/* ----------------- Işıklar ----------------- */
+/* ----------------- Lights ----------------- */
 scene.add(new THREE.HemisphereLight(0x223044, 0x000000, 0.12));
 
-// Spot 1 — masaya sabit vuran ana ışık
+// Spot 1 — fixed main light on the desk
 const spot1 = new THREE.SpotLight(0xffe8c0, 90, 24, Math.PI/7, 0.5, 1.4);
 spot1.position.set(-1.2, 9.5, 1.5);
 spot1.target.position.set(-0.5, 0, 0);
@@ -55,7 +55,7 @@ spot1.shadow.mapSize.set(2048, 2048);
 spot1.shadow.bias = -0.0006;
 scene.add(spot1, spot1.target);
 
-// Spot 2 — imlecin/hover'ın üzerine vuran ışık
+// Spot 2 — follows the cursor / hovered album
 const spot2 = new THREE.SpotLight(0xfff1d6, 70, 22, Math.PI/12, 0.35, 1.6);
 spot2.position.set(1.4, 9.2, 2.6);
 spot2.target.position.set(0, 0, 0);
@@ -64,8 +64,8 @@ spot2.shadow.mapSize.set(2048, 2048);
 spot2.shadow.bias = -0.0006;
 scene.add(spot2, spot2.target);
 
-// Albüm görünümü ışığı (başta kapalı)
-const albumSpot = new THREE.SpotLight(0xfff4e2, 0, 18, Math.PI/6, 0.4, 1.3);
+// Album view light (off at start)
+const albumSpot = new THREE.SpotLight(0xfff4e2, 0, 18, Math.PI/5, 0.85, 1.3);
 albumSpot.position.set(0, 3.5, 5);
 albumSpot.target.position.set(0, 0.1, 0);
 scene.add(albumSpot, albumSpot.target);
@@ -73,7 +73,7 @@ const albumFill = new THREE.PointLight(0xbcd0ff, 0, 14);
 albumFill.position.set(0, 1.5, 4);
 scene.add(albumFill);
 
-/* ----------------- Masa & oda ----------------- */
+/* ----------------- Desk & room ----------------- */
 const deskGroup = new THREE.Group();
 scene.add(deskGroup);
 
@@ -86,7 +86,7 @@ desk.position.y = -0.25;
 desk.receiveShadow = true;
 deskGroup.add(desk);
 
-// Arka karanlık oda duvarı (atmosfer)
+// Dark back wall (atmosphere)
 const roomWall = new THREE.Mesh(
   new THREE.PlaneGeometry(40, 24),
   new THREE.MeshStandardMaterial({ color:0x070708, roughness:1 })
@@ -95,10 +95,10 @@ roomWall.position.set(0, 6, -9);
 roomWall.receiveShadow = true;
 deskGroup.add(roomWall);
 
-// Masa için ışık düşen zemini gösteren görünmez alıcı düzlem (raycast için)
+// invisible plane for cursor->desk raycasting
 const deskPlane = new THREE.Plane(new THREE.Vector3(0,1,0), 0);
 
-/* Toz partikülleri (ışık huzmesinde süzülen) */
+/* Dust particles drifting in the light beam */
 const dustGeo = new THREE.BufferGeometry();
 const dustN = 400, dustPos = new Float32Array(dustN*3);
 for(let i=0;i<dustN;i++){
@@ -113,13 +113,12 @@ const dust = new THREE.Points(dustGeo, new THREE.PointsMaterial({
 }));
 deskGroup.add(dust);
 
-/* ----------------- Albümleri masaya yerleştir ----------------- */
-const books = [];           // { group, mesh, home:{pos,rot}, data }
+/* ----------------- Place albums on the desk ----------------- */
+const books = [];
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2(-2, -2);
 
 function layoutPositions(n){
-  // masaya gevşek bir ızgara
   const cols = Math.min(n, 4);
   const rows = Math.ceil(n / cols);
   const gx = 3.0, gz = 2.4;
@@ -146,8 +145,7 @@ ALBUMS.forEach((album, idx) => {
   group.position.set(p.x, 0.18, p.z);
   group.rotation.y = p.rot;
 
-  const W = 1.7, H = 2.3, T = 0.38;       // albüm boyutu
-  // kapak görseli ya da prosedürel kapak
+  const W = 1.7, H = 2.3, T = 0.38;       // album size
   let coverTex;
   if(album.cover){
     coverTex = new THREE.TextureLoader().load(
@@ -163,7 +161,7 @@ ALBUMS.forEach((album, idx) => {
   const coverMat = new THREE.MeshStandardMaterial({ map:coverTex, roughness:0.6, metalness:0.1 });
   const sideMat  = new THREE.MeshStandardMaterial({ color:album.color || 0x222222, roughness:0.7 });
 
-  // BoxGeometry materyal sırası: +x,-x,+y,-y,+z,-z  -> üst yüz (+y) = kapak
+  // BoxGeometry material order: +x,-x,+y,-y,+z,-z  -> top (+y) = cover
   const mats = [ sideMat, sideMat, coverMat, sideMat, pageEdgeMat, pageEdgeMat ];
   const mesh = new THREE.Mesh(new THREE.BoxGeometry(W, T, H), mats);
   mesh.castShadow = true; mesh.receiveShadow = true;
@@ -179,7 +177,7 @@ ALBUMS.forEach((album, idx) => {
   books.push(group);
 });
 
-/* ----------------- Postprocessing (glow + bloom + vinyet) ----------------- */
+/* ----------------- Postprocessing (hover glow only) ----------------- */
 const composer = new EffectComposer(renderer);
 composer.addPass(new RenderPass(scene, camera));
 
@@ -193,7 +191,7 @@ composer.addPass(outline);
 
 composer.addPass(new OutputPass());
 
-/* ----------------- Özel imleç ----------------- */
+/* ----------------- Custom cursor ----------------- */
 const cursor = document.createElement("div");
 cursor.id = "cursor";
 Object.assign(cursor.style, {
@@ -205,7 +203,7 @@ Object.assign(cursor.style, {
 });
 document.body.appendChild(cursor);
 
-/* ----------------- UI referansları ----------------- */
+/* ----------------- UI references ----------------- */
 const ui = {
   loader:   document.getElementById("loader"),
   label:    document.getElementById("album-label"),
@@ -217,12 +215,15 @@ const ui = {
   next:     document.getElementById("next"),
   counter:  document.getElementById("page-counter"),
   back:     document.getElementById("back"),
-  brand:    document.getElementById("brand")
+  brand:    document.getElementById("brand"),
+  pv:       document.getElementById("photo-viewer"),
+  pvImg:    document.getElementById("pv-img"),
+  pvFrame:  document.querySelector("#photo-viewer .pv-frame")
 };
 
-/* ----------------- Etkileşim durumu ----------------- */
-let hovered = null;          // hover edilen albüm grubu
-let selected = null;         // seçili albüm grubu (inspect/album)
+/* ----------------- Interaction state ----------------- */
+let hovered = null;
+let selected = null;
 let inspectAnchor = new THREE.Vector3();
 let inspectQuat = new THREE.Quaternion();
 
@@ -243,19 +244,52 @@ addEventListener("pointermove", e => {
 addEventListener("pointerdown", onClick);
 
 function onClick(e){
+  // if a large photo is open: click closes it
+  if(photoOpen){ closePhoto(); return; }
+
   if(state === STATE.DESK){
     if(hovered) enterInspect(hovered);
   } else if(state === STATE.INSPECT){
     enterAlbum(selected);
   } else if(state === STATE.ALBUM){
-    // ekranın sağ/sol yarısı -> ileri/geri
+    // is there a visible photo where we clicked?
+    pointer.x = (e.clientX / innerWidth) * 2 - 1;
+    pointer.y = -(e.clientY / innerHeight) * 2 + 1;
+    raycaster.setFromCamera(pointer, camera);
+    const pages = leaves.map(l => l.children[0]);
+    const hits = raycaster.intersectObjects(pages, false);
+    if(hits.length){
+      const leaf = hits[0].object.parent;
+      // which face faces the camera? angle ~0 -> front, ~-PI -> back
+      const face = Math.cos(leaf.userData.angle) >= 0 ? leaf.userData.front : leaf.userData.back;
+      if(face && face.type === "photo"){ openPhoto(face.url); return; }
+    }
+    // no photo: left/right half -> turn page
     if(e.clientX > innerWidth/2) nextPage();
     else prevPage();
   }
 }
 
+/* ----------- Enlarged (framed) photo view ----------- */
+let photoOpen = false;
+function openPhoto(url){
+  ui.pvImg.src = url;
+  setHidden(ui.pv, false);
+  // re-trigger entrance animation
+  ui.pvFrame.style.animation = "none";
+  void ui.pvFrame.offsetWidth;
+  ui.pvFrame.style.animation = "";
+  photoOpen = true;
+  cursor.style.opacity = "0";
+}
+function closePhoto(){
+  setHidden(ui.pv, true);
+  photoOpen = false;
+  cursor.style.opacity = "1";
+}
+
 /* ===========================================================
-   DURUM GEÇİŞLERİ
+   STATE TRANSITIONS
    =========================================================== */
 function enterInspect(group){
   state = STATE.INSPECT;
@@ -266,17 +300,16 @@ function enterInspect(group){
   setHidden(ui.hint, true);
   setHidden(ui.brand, true);
   setHidden(ui.back, false);
-  // kameranın önünde bir nokta hesapla (RE item incelemesi gibi)
+  // compute a point in front of the camera (RE item inspect)
   const dir = new THREE.Vector3(0,0,-1).applyQuaternion(camera.quaternion);
   inspectAnchor.copy(camera.position).addScaledVector(dir, 4.2);
   inspectAnchor.y += 0.1;
-  // albümün kapağı kameraya dönük dursun
+  // cover faces the camera
   const m = new THREE.Matrix4().lookAt(inspectAnchor, camera.position, new THREE.Vector3(0,1,0));
   inspectQuat.setFromRotationMatrix(m);
   inspectQuat.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/2, 0, 0)));
   ui.ctaName.textContent = group.userData.album.name;
   setTimeout(()=> setHidden(ui.cta, false), 500);
-  // diğer albümleri karart
   spot1.intensity = 30;
 }
 
@@ -290,7 +323,7 @@ function backFromInspect(){
   selected = null;
 }
 
-let bookGroup = null;        // açık albüm (sayfalı) grubu
+let bookGroup = null;
 let leaves = [];
 let flipped = 0;
 let wallGroup = null;
@@ -298,7 +331,7 @@ let wallGroup = null;
 function enterAlbum(group){
   state = STATE.ALBUM;
   setHidden(ui.cta, true);
-  // inceleme kitabını yerine geri ışınla (gizli kalacak)
+  // snap the inspected book back home (stays hidden)
   group.position.copy(group.userData.home.pos);
   group.rotation.copy(group.userData.home.rot);
   deskGroup.visible = false;
@@ -306,13 +339,13 @@ function enterAlbum(group){
 
   buildAlbum(group.userData.album);
   setPose(POSE.album);
-  albumSpot.intensity = 60; albumFill.intensity = 8;
+  albumSpot.intensity = 45; albumFill.intensity = 10;
   setHidden(ui.bookUI, false);
   updateCounter();
 }
 
 function backToDesk(){
-  // albüm temizle
+  if(photoOpen) closePhoto();
   if(bookGroup){ scene.remove(bookGroup); disposeGroup(bookGroup); bookGroup = null; }
   if(wallGroup){ scene.remove(wallGroup); disposeGroup(wallGroup); wallGroup = null; }
   leaves = []; flipped = 0;
@@ -328,11 +361,16 @@ function backToDesk(){
   selected = null;
 }
 
-/* ESC / geri */
+/* ESC / back */
 addEventListener("keydown", e => {
   if(e.key === "Escape"){
-    if(state === STATE.ALBUM) backToDesk();
+    if(photoOpen) closePhoto();
+    else if(state === STATE.ALBUM) backToDesk();
     else if(state === STATE.INSPECT) backFromInspect();
+  }
+  if(state === STATE.ALBUM && !photoOpen){
+    if(e.key === "ArrowRight") nextPage();
+    if(e.key === "ArrowLeft")  prevPage();
   }
 });
 ui.back.addEventListener("click", () => {
@@ -343,17 +381,17 @@ ui.prev.addEventListener("click", e => { e.stopPropagation(); prevPage(); });
 ui.next.addEventListener("click", e => { e.stopPropagation(); nextPage(); });
 
 /* ===========================================================
-   ALBÜM İÇİ — açık kitap + 3D sayfa çevirme
+   INSIDE ALBUM — open book + 3D page flipping
    =========================================================== */
 const PAGE_W = 1.9, PAGE_H = 2.5, PAGE_ASPECT = PAGE_W / PAGE_H;
 
 function buildAlbum(album){
   bookGroup = new THREE.Group();
   bookGroup.position.set(0, 0.15, 0);
-  bookGroup.rotation.x = -0.18;          // hafif geriye yatık
+  bookGroup.rotation.x = -0.18;          // slightly tilted back
   scene.add(bookGroup);
 
-  // Alan Wake tarzı arka duvar
+  // Alan Wake style back wall
   wallGroup = new THREE.Group();
   const wall = new THREE.Mesh(
     new THREE.PlaneGeometry(34, 20),
@@ -363,41 +401,43 @@ function buildAlbum(album){
   wallGroup.add(wall);
   scene.add(wallGroup);
 
-  // arka kapak (gövde)
+  // back cover (body)
   const body = new THREE.Mesh(
     new THREE.BoxGeometry(PAGE_W*2 + 0.16, PAGE_H + 0.14, 0.18),
-    new THREE.MeshStandardMaterial({ color:album.color || 0x222, roughness:0.7 })
+    new THREE.MeshStandardMaterial({ color:album.color || 0x222, roughness:1, metalness:0 })
   );
   body.position.z = -0.12;
   body.castShadow = true; body.receiveShadow = true;
   bookGroup.add(body);
 
-  // yüzler: [kapak] + fotoğraflar (+ çift sayı için boş)
+  // faces: [cover] + photos (+ blank to make it even)
   const faces = [{ type:"cover", album }];
   (album.photos || []).forEach(file => {
     faces.push({ type:"photo", url:`assets/${album.folder}/${file}` });
   });
-  if(faces.length === 1) faces.push({ type:"empty" });  // hiç foto yoksa
+  if(faces.length === 1) faces.push({ type:"empty" });  // no photos
   if(faces.length % 2 !== 0) faces.push({ type:"back" });
 
   const N = faces.length / 2;
   leaves = [];
   for(let k=0;k<N;k++){
-    const leaf = new THREE.Group();          // pivot omurgada (x=0)
-    const frontTex = makeFaceTexture(faces[2*k]);
-    const backTex  = makeFaceTexture(faces[2*k+1], true);  // arka -> aynalı
-    const fMat = new THREE.MeshStandardMaterial({ map:frontTex, roughness:0.55 });
-    const bMat = new THREE.MeshStandardMaterial({ map:backTex,  roughness:0.55 });
-    const edge = new THREE.MeshStandardMaterial({ color:0x0c0b09, roughness:0.9 });
-    // +x,-x,+y,-y,+z(ön),-z(arka)
+    const leaf = new THREE.Group();          // pivot at spine (x=0)
+    const front = faces[2*k], back = faces[2*k+1];
+    const frontTex = makeFaceTexture(front);
+    const backTex  = makeFaceTexture(back, true);  // back -> mirrored
+    // MATTE paper: roughness 1, metalness 0 -> no light reflection
+    const fMat = new THREE.MeshStandardMaterial({ map:frontTex, roughness:1, metalness:0 });
+    const bMat = new THREE.MeshStandardMaterial({ map:backTex,  roughness:1, metalness:0 });
+    const edge = new THREE.MeshStandardMaterial({ color:0x0c0b09, roughness:1, metalness:0 });
+    // +x,-x,+y,-y,+z(front),-z(back)
     const page = new THREE.Mesh(
       new THREE.BoxGeometry(PAGE_W, PAGE_H, 0.012),
       [edge, edge, edge, edge, fMat, bMat]
     );
-    page.position.x = PAGE_W/2;             // omurgadan sağa doğru
+    page.position.x = PAGE_W/2;             // extend right from spine
     page.castShadow = true; page.receiveShadow = true;
     leaf.add(page);
-    leaf.userData = { angle:0, target:0, index:k };
+    leaf.userData = { angle:0, target:0, index:k, front, back };
     bookGroup.add(leaf);
     leaves.push(leaf);
   }
@@ -405,7 +445,7 @@ function buildAlbum(album){
   layoutLeaves(true);
 }
 
-/* Bir yüz için doku üret (fotoğraf -> mat içinde sığdırılmış) */
+/* Build a texture for a face (photo -> contained in a mat) */
 function makeFaceTexture(face, mirror=false){
   const W = 1100, H = Math.round(W / PAGE_ASPECT);
   const c = document.createElement("canvas");
@@ -422,7 +462,6 @@ function makeFaceTexture(face, mirror=false){
     paper();
     x.strokeStyle = "rgba(217,164,65,.18)"; x.lineWidth = 3; x.strokeRect(44,44,W-88,H-88);
   } else if(face.type === "cover"){
-    // inner cover / title page
     paper();
     x.fillStyle = "rgba(232,226,212,.92)"; x.textAlign = "center";
     x.font = "600 66px Oswald, sans-serif";
@@ -438,19 +477,17 @@ function makeFaceTexture(face, mirror=false){
   tex.anisotropy = 8;
   if(mirror){ tex.wrapS = THREE.RepeatWrapping; tex.repeat.x = -1; tex.offset.x = 1; }
 
-  // fotoğrafı asenkron yükle ve mat içine "contain" çiz
+  // load photo async and draw "contain" inside the mat
   if(face && face.type === "photo"){
     const img = new Image();
     img.onload = () => {
       paper();
-      // frame
       const pad = Math.round(W * 0.06);
       const innerW = W - pad*2, innerH = H - pad*2;
       const ar = img.width / img.height;
       let dw = innerW, dh = innerW / ar;
       if(dh > innerH){ dh = innerH; dw = innerH * ar; }
       const dx = (W - dw)/2, dy = (H - dh)/2;
-      // shadow + photo
       x.save();
       x.shadowColor = "rgba(0,0,0,.7)"; x.shadowBlur = 30; x.shadowOffsetY = 10;
       x.fillStyle = "#000"; x.fillRect(dx, dy, dw, dh);
@@ -480,10 +517,9 @@ function layoutLeaves(snap=false){
     const isFlipped = i < flipped;
     leaf.userData.target = isFlipped ? -Math.PI : 0;
     if(snap){ leaf.userData.angle = leaf.userData.target; leaf.rotation.y = leaf.userData.angle; }
-    // z istifleme
     let z;
-    if(isFlipped) z = 0.02 * (i + 1);          // sol istif (en son çevrilen üstte)
-    else          z = 0.02 * (N - i);          // sağ istif (sıradaki üstte)
+    if(isFlipped) z = 0.02 * (i + 1);          // left stack
+    else          z = 0.02 * (N - i);          // right stack
     leaf.position.z = z;
   });
 }
@@ -508,7 +544,7 @@ function updateCounter(){
 }
 
 /* ===========================================================
-   YARDIMCILAR
+   HELPERS
    =========================================================== */
 function setHidden(el, hide){ el.classList.toggle("hidden", hide); }
 
@@ -523,16 +559,16 @@ function disposeGroup(g){
 }
 
 /* ===========================================================
-   ANİMASYON DÖNGÜSÜ
+   ANIMATION LOOP
    =========================================================== */
 const clock = new THREE.Clock();
 
 function animate(){
   requestAnimationFrame(animate);
   const dt = Math.min(clock.getDelta(), 0.05);
-  const k = 1 - Math.exp(-dt * 6);   // yumuşatma katsayısı
+  const k = 1 - Math.exp(-dt * 6);
 
-  /* --- DESK: hover & spot takibi --- */
+  /* --- DESK: hover & spotlight follow --- */
   if(state === STATE.DESK){
     raycaster.setFromCamera(pointer, camera);
     const meshes = books.map(b => b.userData.mesh);
@@ -556,7 +592,6 @@ function animate(){
       }
     }
 
-    // Spot 2 hedefi: hover varsa albüme, yoksa imlecin masadaki izdüşümüne
     const t2 = spot2.target.position;
     if(hovered){
       t2.lerp(hovered.position, k);
@@ -571,44 +606,40 @@ function animate(){
     }
     spot2.target.updateMatrixWorld();
 
-    // hover edilen albümü hafifçe kaldır
     books.forEach(b => {
       const lift = (b === hovered) ? 0.5 : 0;
       b.position.y += (0.18 + lift - b.position.y) * k;
     });
 
-    // hafif parallax
     camPos.copy(POSE.desk.pos);
     camPos.x += pointer.x * 0.6;
     camPos.y += pointer.y * 0.3;
   }
 
-  /* --- INSPECT: albümü ekrana getir --- */
+  /* --- INSPECT: bring album to screen --- */
   if(state === STATE.INSPECT && selected){
     selected.position.lerp(inspectAnchor, k);
     selected.quaternion.slerp(inspectQuat, k);
-    // hafif salınım
     selected.position.y = inspectAnchor.y + Math.sin(clock.elapsedTime * 1.3) * 0.04;
   }
 
-  /* --- ALBUM: sayfa açılarını yumuşat --- */
+  /* --- ALBUM: smooth page angles --- */
   if(state === STATE.ALBUM){
     leaves.forEach(leaf => {
       leaf.userData.angle += (leaf.userData.target - leaf.userData.angle) * (1 - Math.exp(-dt*8));
       leaf.rotation.y = leaf.userData.angle;
-      // çevrilirken öne çıkar
       const mid = Math.abs(leaf.userData.angle + Math.PI/2) < Math.PI/2 - 0.05 &&
                   Math.abs(leaf.userData.target - leaf.userData.angle) > 0.01;
       if(mid) leaf.position.z = 0.5;
     });
   }
 
-  /* --- Kamera yumuşak geçiş --- */
+  /* --- Camera smooth transition --- */
   camera.position.lerp(camPos, k);
   curLook.lerp(camLook, k);
   camera.lookAt(curLook);
 
-  // toz hareketi
+  // dust movement
   if(deskGroup.visible){
     const pos = dust.geometry.attributes.position;
     for(let i=0;i<dustN;i++){
@@ -624,7 +655,7 @@ function animate(){
 }
 
 /* ===========================================================
-   BAŞLAT
+   START
    =========================================================== */
 addEventListener("resize", () => {
   camera.aspect = innerWidth / innerHeight;
@@ -641,7 +672,7 @@ function start(){
 }
 
 animate();
-// fontların yüklenmesini bekle, sonra sahneye gir
+// wait for fonts, then enter the scene
 if(document.fonts && document.fonts.ready){
   document.fonts.ready.then(() => setTimeout(start, 600));
 } else {
